@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--开启spring的注解-->
+    <context:annotation-config/>
+
+    <!-- 开启AOP -->
+    <aop:aspectj-autoproxy/>
+
+    <!--指定spring扫描的包，这些包下面加了相应注解的类会被创建实例，-->
+    <!--放入spring的仓库中，以便从spring直接获取-->
+    <context:component-scan base-package="cn.lgw.learn"/>
+
+    <!--数据库连接池，需要配置与数据库的连接-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <!--与数据连接需要的URL，格式为：jdbc:mysql://服务器地址/数据库名？参数列表-->
+        <property name="url"
+                  value="jdbc:mysql://localhost:3306/test?characterEncoding=utf8&amp;useInformationSchema=true"/>
+        <!--数据库的账号-->
+        <property name="username" value="root"/>
+
+        <!-- druid 连接池的 -->
+        <property name="filters" value="stat"/>
+
+        <!-- 下面druid 和 dbcp 连接池通用的 ↓↓↓↓↓↓↓↓↓↓↓↓ -->
+        <!--maxActive: 最大连接数量 -->
+        <property name="maxActive" value="20"/>
+        <!--initialSize: 初始化连接 -->
+        <property name="initialSize" value="5"/>
+    </bean>
+
+    <!--创建数据库会话的工厂-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 配置扫描Domain的包路径 -->
+        <property name="typeAliasesPackage" value="cn.lgw.learn.domain"/>
+        <!-- 配置mybatis配置文件的位置 -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!-- 配置扫描Mapper XML的位置 -->
+        <!--<property name="mapperLocations"-->
+        <!--value="classpath*:/mapper/**/*.xml"/>-->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+
+    <!-- 扫描对应的Java Mapper -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--指定存放java mapper接口的的包路径-->
+        <property name="basePackage" value="cn.lgw.learn.mapper"/>
+        <!--指定连接会话工厂-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!--关闭数据库的事务（暂时不需要这个功能）-->
+    <bean id="mybatisTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <mvc:annotation-driven>
+        <!-- 消息转换器 -->
+        <mvc:message-converters>
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <constructor-arg name="defaultCharset" value="utf-8"/>
+            </bean>
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter"/>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+</beans>
